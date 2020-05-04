@@ -60,7 +60,7 @@ class hash:
 	def __init__(self, hash):
 		self.hash = hash
 		self.data = []
-		self.db = ["/sdcard/hash.db"]
+		self.db = ["databases/hash.db"]
 		self.found = 0
 		self.type = None
 
