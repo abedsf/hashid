@@ -33,13 +33,13 @@ Simple hash cracker
 - $ python3 hash.py 7e84c0b5f0b4ed78a2e24efed9bd7c35e94d4eb6
 
 ### Change Log
-#### v0.1
+#### v0.1 (05-05-2020)
 - Build tools
 - Add md5
 - Add sha1
 - Build Wordlist
 
-#### v0.2
+#### v0.2 (06-05-2020)
 - Add sha256
 - Add sha384
 
