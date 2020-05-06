@@ -7,11 +7,14 @@ import threading
 
 # Hashing
 def hashcrypt(type, text):
-	text = text.encode()
 	if type == "sha1":
-		return hashlib.new("sha1", text).hexdigest()
+		return hashlib.new("sha1", text.encode()).hexdigest()
 	elif type == "md5":
-		return hashlib.md5(text).hexdigest()
+		return hashlib.md5(text.encode()).hexdigest()
+	elif type == "sha256":
+		return hashlib.sha256(text.encode()).hexdigest()
+	elif type == "sha384":
+		return hashlib.new("sha384", text.encode()).hexdigest()
 
 # Color Code
 class color:
@@ -49,7 +52,7 @@ def banner():
    | |    | |   %s ╠═╣├─┤└─┐├─┤║ ║║%s
    | |.-""-.|    %s╩ ╩┴ ┴└─┘┴ ┴╩═╩╝%s
   ///`.::::.`\  %sAuthor %s:%s Billal%s
- ||| ::/  \:: ; %sVersion%s:%s BETA [0.1]%s
+ ||| ::/  \:: ; %sVersion%s:%s BETA [0.2]%s
  ||; ::\__/:: ; %sTeams %s :%s Cyber Ghost ID%s
   \\\\\ '::::' /         :%s Black Coder Crush%s
     `=':-..-'`%s
@@ -69,6 +72,10 @@ class hash:
 			self.type = "md5"
 		elif len(self.hash) == 40:
 			self.type = "sha1"
+		elif len(self.hash) == 64:
+			self.type = "sha256"
+		elif len(self.hash) == 96:
+			self.type = "sha384"
 		else:
 			show("%s[%sERROR%s]: %sUnknown Hash" % (color.w, color.r, color.w, color.r))
 			sys.exit()
@@ -125,12 +132,54 @@ class hash:
                 if self.found == 0:
                         show("%s[%sERROR%s]: %sFailed to crack hash" % (color.w, color.r, color.w, color.r), other="\n")
 
+	def sha256(self):
+                show("%s[%sINFO%s]: %sStarting" % (color.w, color.g, color.w, color.y))
+                show("%s[%sINFO%s]: %sType %sSHA256" % (color.w, color.g, color.w, color.y, color.b))
+                th = threading.Thread(target=self.readDB)
+                th.start()
+                th.join()
+                id = 0
+                jml = len(self.data)
+                for a in self.data:
+                        id += 1
+                        crypt = hashcrypt("sha256", a)
+                        if crypt == self.hash:
+                                show("%s[%sFOUND%s]: %sHash: %s..., result: %s" % (color.w, color.g, color.w, color.g, self.hash[:24], a), other="\n")
+                                self.found += 1
+                                sys.exit()
+                        show("%s[%sCRACKING%s]: %s/%s" % (color.w, color.y, color.w, id, jml), flush=True)
+                if self.found == 0:
+                        show("%s[%sERROR%s]: %sFailed to crack hash" % (color.w, color.r, color.w, color.r), other="\n")
+
+	def sha384(self):
+                show("%s[%sINFO%s]: %sStarting" % (color.w, color.g, color.w, color.y))
+                show("%s[%sINFO%s]: %sType %sSHA384" % (color.w, color.g, color.w, color.y, color.b))
+                th = threading.Thread(target=self.readDB)
+                th.start()
+                th.join()
+                id = 0
+                jml = len(self.data)
+                for a in self.data:
+                        id += 1
+                        crypt = hashcrypt("sha384", a)
+                        if crypt == self.hash:
+                                show("%s[%sFOUND%s]: %sHash: %s..., result: %s" % (color.w, color.g, color.w, color.g, self.hash[:24], a), other="\n")
+                                self.found += 1
+                                sys.exit()
+                        show("%s[%sCRACKING%s]: %s/%s" % (color.w, color.y, color.w, id, jml), flush=True)
+                if self.found == 0:
+                        show("%s[%sERROR%s]: %sFailed to crack hash" % (color.w, color.r, color.w, color.r), other="\n")
+
 	def crack(self):
 		self.checkHash()
 		if self.type == "md5":
 			self.md5()
 		elif self.type == "sha1":
 			self.sha1()
+		elif self.type == "sha256":
+			self.sha256()
+		elif self.type == "sha384":
+			self.sha384()
 		else:
 			print ()
 			sys.exit()
