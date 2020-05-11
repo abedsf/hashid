@@ -1,50 +1,45 @@
-import sys
+# Author: Billal Fauzan
+# Version: 0.3
+
 import os
+import sys
 import sqlite3
-import hashlib
 import time
+import hashlib
+import glob
 import threading
+import optparse
 
-# Hashing
-def hashcrypt(type, text):
-	if type == "sha1":
-		return hashlib.new("sha1", text.encode()).hexdigest()
-	elif type == "md5":
-		return hashlib.md5(text.encode()).hexdigest()
-	elif type == "sha256":
-		return hashlib.sha256(text.encode()).hexdigest()
-	elif type == "sha384":
-		return hashlib.new("sha384", text.encode()).hexdigest()
-
-# Color Code
+# === COLOR ===
 class color:
 	if os.name == "nt":
 		r = ""
 		g = ""
 		y = ""
 		b = ""
+		b = ""
 		p = ""
 		w = ""
 		n = ""
 	else:
-		r = "\033[91m"
-		g = "\033[92m"
-		y = "\033[93m"
-		b = "\033[94m"
-		p = "\033[95m"
-		w = "\033[97m"
-		n = "\033[0m"
+		r = "\033[1;91m" # RED
+		g = "\033[1;92m" # GREEN
+		y = "\033[1;93m" # YELLOW
+		b = "\033[1;94m" # BLUE
+		p = "\033[1;95m" # PURPLE
+		w = "\033[97;1m" # WHITE
+		n = "\033[0m" # NORMAL
 
-# Show Text or Print Text
 def show(text, flush=False, other=""):
-	waktu = (time.ctime(time.time()).split(" "))[4]
-	showText = ("%s[%s%s%s] %s" % (color.w, color.b, waktu, color.w, text))
+	waktu = (time.ctime(time.time()).split(" "))[3]
+	result = "%s%s[%s%s%s] %s" % (other, color.w, color.b, waktu, color.w, text)
 	if flush == True:
-		print ("\r"+showText, end="", flush=True)
+		print("\r"+result, flush=True, end="")
 	else:
-		print (other+showText)
+		print(result)
 
-def banner():
+def banner(help=False, msg=""):
+	os.system("cls" if os.name == "nt" else "clear")
 	logo = """
 %s     .-""-.
     / .--. \\
@@ -52,146 +47,120 @@ def banner():
    | |    | |   %s ╠═╣├─┤└─┐├─┤║ ║║%s
    | |.-""-.|    %s╩ ╩┴ ┴└─┘┴ ┴╩═╩╝%s
   ///`.::::.`\  %sAuthor %s:%s Billal%s
- ||| ::/  \:: ; %sVersion%s:%s BETA [0.2]%s
+ ||| ::/  \:: ; %sVersion%s:%s BETA [0.3]%s
  ||; ::\__/:: ; %sTeams %s :%s Cyber Ghost ID%s
   \\\\\ '::::' /         :%s Black Coder Crush%s
     `=':-..-'`%s
 """ % (color.r, color.g, color.r, color.g, color.r, color.g, color.r, color.b, color.r, color.y, color.r, color.b, color.r, color.y, color.r, color.b, color.r, color.y, color.r, color.y, color.r, color.n)
 	print(logo)
+	if help == True:
+		if msg != "":
+			show("%s[%sWARNING%s]: %s%s" % (color.w, color.y, color.w, color.y, msg))
+		helper = """Options:
+  -h = helper
+  -f = multi crack
+  -t = single crack
+  -a = about
+  -d = download data
+"""
+		print (helper)
 
-class hash:
-	def __init__(self, hash):
+class hashid:
+	def __init__(self, hash="", file=""):
 		self.hash = hash
+		self.file = file
 		self.data = []
-		self.db = ["databases/hash.db"]
-		self.found = 0
-		self.type = None
+		self.found = []
 
-	def checkHash(self):
+	def crypt(self, type, text):
+		hash = hashlib.new(type, text.encode())
+		return hash.hexdigest()
+
+	def detectHash(self):
 		if len(self.hash) == 32:
-			self.type = "md5"
+			type = "md5"
 		elif len(self.hash) == 40:
-			self.type = "sha1"
+			type = "sha1"
 		elif len(self.hash) == 64:
-			self.type = "sha256"
+			type = "sha256"
 		elif len(self.hash) == 96:
-			self.type = "sha384"
+			type = "sha384"
+		elif len(self.hash) == 56:
+			type = "sha224"
+		elif len(self.hash) == 128:
+			type = "sha512"
 		else:
-			show("%s[%sERROR%s]: %sUnknown Hash" % (color.w, color.r, color.w, color.r))
-			sys.exit()
+			type = color.r+"unknown"
+		return type
 
 	def readDB(self):
-		show("%s[%sWARNING%s]: %sReading databases" % (color.w, color.y, color.w, color.y))
-		for a in self.db:
-			try:
-				con = sqlite3.connect(a)
-				cur = con.cursor()
-				cur.execute("SELECT * FROM wordlist")
-				for text in cur:
-					self.data.append(text[1])
-			except:
-				show("%s[%sERROR%s]: %sDatabases error" % (color.w, color.r, color.w, color.r))
-				sys.exit()
-		show("%s[%sWARNING%s]: %sSucces read databases" % (color.w, color.y, color.w, color.g))
-
-	def md5(self):
-		show("%s[%sINFO%s]: %sStarting" % (color.w, color.g, color.w, color.y))
-		show("%s[%sINFO%s]: %sType %sMD5" % (color.w, color.g, color.w, color.y, color.b))
-		th = threading.Thread(target=self.readDB)
-		th.start()
-		th.join()
-		id = 0
-		jml = len(self.data)
-		for a in self.data:
-			id += 1
-			crypt = hashcrypt("md5", a)
-			if crypt == self.hash:
-				show("%s[%sFOUND%s]: %sHash: %s, result: %s" % (color.w, color.g, color.w, color.g, self.hash, a), other="\n")
-				self.found += 1
-				sys.exit()
-			show("%s[%sCRACKING%s]: %s/%s" % (color.w, color.y, color.w, id, jml), flush=True)
-		if self.found == 0:
-			show("%s[%sERROR%s]: %sFailed to crack hash" % (color.w, color.r, color.w, color.r), other="\n")
-
-	def sha1(self):
-                show("%s[%sINFO%s]: %sStarting" % (color.w, color.g, color.w, color.y))
-                show("%s[%sINFO%s]: %sType %sSHA1" % (color.w, color.g, color.w, color.y, color.b))
-                th = threading.Thread(target=self.readDB)
-                th.start()
-                th.join()
-                id = 0
-                jml = len(self.data)
-                for a in self.data:
-                        id += 1
-                        crypt = hashcrypt("sha1", a)
-                        if crypt == self.hash:
-                                show("%s[%sFOUND%s]: %sHash: %s, result: %s" % (color.w, color.g, color.w, color.g, self.hash, a), other="\n")
-                                self.found += 1
-                                sys.exit()
-                        show("%s[%sCRACKING%s]: %s/%s" % (color.w, color.y, color.w, id, jml), flush=True)
-                if self.found == 0:
-                        show("%s[%sERROR%s]: %sFailed to crack hash" % (color.w, color.r, color.w, color.r), other="\n")
-
-	def sha256(self):
-                show("%s[%sINFO%s]: %sStarting" % (color.w, color.g, color.w, color.y))
-                show("%s[%sINFO%s]: %sType %sSHA256" % (color.w, color.g, color.w, color.y, color.b))
-                th = threading.Thread(target=self.readDB)
-                th.start()
-                th.join()
-                id = 0
-                jml = len(self.data)
-                for a in self.data:
-                        id += 1
-                        crypt = hashcrypt("sha256", a)
-                        if crypt == self.hash:
-                                show("%s[%sFOUND%s]: %sHash: %s..., result: %s" % (color.w, color.g, color.w, color.g, self.hash[:24], a), other="\n")
-                                self.found += 1
-                                sys.exit()
-                        show("%s[%sCRACKING%s]: %s/%s" % (color.w, color.y, color.w, id, jml), flush=True)
-                if self.found == 0:
-                        show("%s[%sERROR%s]: %sFailed to crack hash" % (color.w, color.r, color.w, color.r), other="\n")
-
-	def sha384(self):
-                show("%s[%sINFO%s]: %sStarting" % (color.w, color.g, color.w, color.y))
-                show("%s[%sINFO%s]: %sType %sSHA384" % (color.w, color.g, color.w, color.y, color.b))
-                th = threading.Thread(target=self.readDB)
-                th.start()
-                th.join()
-                id = 0
-                jml = len(self.data)
-                for a in self.data:
-                        id += 1
-                        crypt = hashcrypt("sha384", a)
-                        if crypt == self.hash:
-                                show("%s[%sFOUND%s]: %sHash: %s..., result: %s" % (color.w, color.g, color.w, color.g, self.hash[:24], a), other="\n")
-                                self.found += 1
-                                sys.exit()
-                        show("%s[%sCRACKING%s]: %s/%s" % (color.w, color.y, color.w, id, jml), flush=True)
-                if self.found == 0:
-                        show("%s[%sERROR%s]: %sFailed to crack hash" % (color.w, color.r, color.w, color.r), other="\n")
-
-	def crack(self):
-		self.checkHash()
-		if self.type == "md5":
-			self.md5()
-		elif self.type == "sha1":
-			self.sha1()
-		elif self.type == "sha256":
-			self.sha256()
-		elif self.type == "sha384":
-			self.sha384()
+		show("%s[%sINFO%s]: %sReading Databases" % (color.w, color.g, color.w, color.r))
+		scanFile = glob.glob("databases/*.db")
+		if len(scanFile) == 0:
+			show("%s[%sERROR%s]: %sFile databases not found, please download%s" % (color.w, color.r, color.w, color.r, color.n))
+			sys.exit()
 		else:
-			print ()
+			show("%s[%sWARNING%s]: %sWait a minute, it might take about 10 seconds" % (color.w, color.y, color.w, color.y))
+			for file in scanFile:
+				try:
+					connection = sqlite3.connect(file)
+					cursor = connection.cursor()
+					cursor.execute("SELECT * FROM wordlist")
+					for data in cursor:
+						self.data.append(data[1])
+				except:
+					show("%s[%sERROR%s]: %sFile '%s' not connected" % (color.w, color.r, color.w, color.r, file))
+					if len(self.data) == 0:
+						sys.exit()
+			show("%s[%sINFO%s]: %sSuccess to reading databases" % (color.w, color.g, color.w, color.g))
+
+	def brute(self):
+		show("%s[%sINFO%s]: %sStarting Brute Force" % (color.w, color.g, color.w, color.y))
+		type = self.detectHash()
+		show("%s[%sWARNING%s]: %sType: %s" % (color.w, color.y, color.w, color.y, color.b+type))
+		jml = len(self.data)
+		id = 0
+		for data in self.data:
+			id += 1
+			try:
+				hashing = self.crypt(type, data)
+				show("%s[%sCRACKING%s]: %s%s/%s" % (color.w, color.y, color.w, color.p, id, jml), flush=True)
+				if hashing == self.hash:
+					show("%s[%sFOUND%s]: %sHash: %s, Result: %s" % (color.w, color.g, color.w, color.g, self.hash[:32], data), other="\n")
+					self.found.append(data)
+					break
+			except ValueError:
+				show("%s[%sERROR%s]: %sUnknown hash" % (color.w, color.r, color.w, color.r))
+				break
+
+	def start(self):
+		th = threading.Thread(target=self.brute)
+		th.start()
+
+	def multiCrack(self):
+		self.readDB()
+		o = open(self.file).read()
+		for a in o.splitlines():
+			self.hash = a
+			self.brute()
+			print(color.w+"-"*60)
+
+
+def main():
+	parse = optparse.OptionParser(epilog="Hash Brute Force", add_help_option=False)
+	parse.add_option("-h", "--h", dest="help", help="Helper", action="store_true")
+	parse.add_option("-f", "--file", dest="multi", help="Multi Crack", action="store_true")
+	opt, args = parse.parse_args()
+	if opt.help:
+		banner(help=True)
+	elif opt.multi:
+		banner()
+		try:
+			hashID = hashid(file=args[0])
+			hashID.multiCrack()
+		except IndexError:
+			show("%s[%sERROR%s]: %sPlease input file!%s" % (color.w, color.r, color.w, color.r, color.n))
 			sys.exit()
 
-
 if __name__ == "__main__":
-	os.system("cls" if os.name == "nt" else "clear")
-	banner()
-	try:
-		hashid = hash(sys.argv[1])
-		th = threading.Thread(target=hashid.crack)
-		th.start()
-	except IndexError:
-		show("%s[%sWARNING%s]: %sPlease input hash" % (color.w, color.y, color.w, color.y))
-		show("%s[%sINFO%s]: Use: %s./%s <your hash>" % (color.w, color.g, color.w, color.g, sys.argv[0]))
+	main()

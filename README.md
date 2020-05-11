@@ -5,6 +5,7 @@ Simple hash cracker
 - Fast Crack
 - Support 2 hash
 - Auto Detect Hash
+- Total Wordlist 411791 word
 
 ## How to install
 ### Termux
@@ -43,8 +44,21 @@ Simple hash cracker
 - Add sha256
 - Add sha384
 
+#### v0.3
+- Add 104030 wordlist
+- Add sha224
+- Add sha512
+- Add multi crack
+- Fix Bug
+
 ## Screenshot 1
 ![alt text](https://raw.githubusercontent.com/Billal06/hashid/master/images/ss1.jpg)
+
+## ScreenShot 2
+![alt text](https://raw.githubusercontent.com/Billal06/hashid/master/images/ss2.jpg)
+
+## ScreenShot 3
+![alt text](https://raw.githubusercontent.com/Billal06/hashid/master/images/ss3.jpg)
 
 > This tool is still in the development stage so apologize if this tool has a lot of bugs. immediately report bugs [here](http://wa.me/6287733872488)
 
